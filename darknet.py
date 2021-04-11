@@ -221,7 +221,7 @@ if os.name == "nt":
             print("Environment variables indicated a CPU run, but we didn't find {}. Trying a GPU run anyway.".format(winNoGPUdll))
 else:
     print("Ruta en donde busca libdarknet.so:", os.path.join(
-        os.environ.get('DARKNET_PATH', './'))
+        os.environ.get('DARKNET_PATH', './')))
     lib = CDLL(os.path.join(
         os.environ.get('DARKNET_PATH', './'),
         "libdarknet.so"), RTLD_GLOBAL)
