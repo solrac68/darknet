@@ -294,6 +294,8 @@ jpath = './SoftwareOne/1. step1/'
 # Nombre del archivo json a procesar.
 if __name__ == '__main__':
 
+    # Iniciando el desarrollo personalizado
+
     if len(sys.argv) == 2:
         id = str(sys.argv[1])
     else:
