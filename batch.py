@@ -21,6 +21,7 @@ import warnings
 warnings.filterwarnings('ignore')
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import sys
+from azure.cosmosdb.table.tableservice import TableService
 
 
 
@@ -56,7 +57,7 @@ connect_str = config._AZURE_STORAGE_CONNECTION_STRING
 container = config._STORAGE_CONTAINER_INPUT
 
 
-def getJsonFromAzStorage(local_path, json_name):
+def getJsonFromBlobStorage(local_path, json_name):
     download_file_path = os.path.join(local_path, json_name)
     try:
 
@@ -66,12 +67,6 @@ def getJsonFromAzStorage(local_path, json_name):
             blob_name=json_name)
 
         blob = blob_client.download_blob().readall()
-
-        # print("\nContenido del blob\n")
-        # print(blob)
-        # print("\n")
-        # print(download_file_path)
-        # print("\n")
         
         with open(download_file_path, "wb") as download_file:
             download_file.write(blob)
@@ -83,8 +78,10 @@ def getJsonFromAzStorage(local_path, json_name):
         print("\nError al descargar el json: \n\t" + download_file_path)
         raise FileExistsError("Error al descargar el archivo")
 
-def getNombreModeloFromCosmosDB(cliente):
-    pass
+def getConfigFromTableStorage(cliente, proyecto):
+    table_service = TableService(connection_string=config._AZURE_STORAGE_CONNECTION_STRING)
+    task = table_service.get_entity(config._STORAGE_TABLE_NAME, cliente, proyecto)
+    return (task.cfg_file, task.data_file, task.w_file, task.ypath)
 
 ### PASO No 1. LEER EL JSONS EN COLA
 jpath = './SoftwareOne/1. step1/'
@@ -95,12 +92,16 @@ if __name__ == '__main__':
 
     # Iniciando el desarrollo personalizado
 
+    print(len(sys.argv))
+
     if len(sys.argv) == 2:
         json_name = str(sys.argv[1])
+    elif len(sys.argv) == 1:
+        json_name = "68a11879-7434-420f-bb09-cde500c0b95b.json"
     else:
         raise ValueError("La parametros son incorrectos")
 
-    archivoMensaje = getJsonFromAzStorage(jpath, json_name)
+    archivoMensaje = getJsonFromBlobStorage(jpath, json_name)
 
         
     ### PASO No 2.  ABRIENDO JSON:
@@ -118,7 +119,14 @@ if __name__ == '__main__':
 
 
     ### PASO No 3.  CONSULTA BASE DE DATOS SEGUN CLIENTE Y PROYECTO Y TRAE:
-    cfg_file  =  "yolov4.cfg"            # Nombre archivo cfg de yolo
-    data_file =  "coco.data"             # Nombre archivo .data de yolo
-    w_file    =  "yolov4.weights"        # Nombre modelo  .weights de yolo
-    ypath     =  './SoftwareOne/2.yolo_files/'     # la ruta donde encuentra estos archivos
+    (cfg_file, data_file, w_file, ypath) = getConfigFromTableStorage(cliente, proyecto)
+
+    print("cfg_file: {0}".format(cfg_file))
+    print("data_file: {0}".format(data_file))
+    print("w_file: {0}".format(w_file))
+    print("ypath: {0}".format(ypath))
+
+    #cfg_file  =  "yolov4.cfg"            # Nombre archivo cfg de yolo
+    #data_file =  "coco.data"             # Nombre archivo .data de yolo
+    #w_file    =  "yolov4.weights"        # Nombre modelo  .weights de yolo
+    #ypath     =  './SoftwareOne/2.yolo_files/'     # la ruta donde encuentra estos archivos
