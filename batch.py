@@ -23,6 +23,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import sys
 from azure.cosmosdb.table.tableservice import TableService
 import timeit
+import sqlite3
 
 
 
@@ -58,6 +59,9 @@ altNames = None
 #_STORAGE_CONTAINER_INPUT = config._STORAGE_CONTAINER_INPUT
 #_STORAGE_CONTAINER_MODEL = config._STORAGE_CONTAINER_MODEL
 
+### Base de datos local creada en 2.yolo_files en start_task para controlar la descarga de archivos grandes desde azure storage.
+# sqlite3 download.sqlite "CREATE TABLE downloads ( name_file varchar(60) PRIMARY KEY NOT NULL, estado varchar(30));"
+
 
 def getFromBlobStorage(local_path, blob,container):
     download_file_path = os.path.join(local_path, blob)
@@ -82,6 +86,38 @@ def getConfigFromTableStorage(cliente, proyecto):
     table_service = TableService(connection_string=config._AZURE_STORAGE_CONNECTION_STRING)
     task = table_service.get_entity(config._STORAGE_TABLE_NAME, cliente, proyecto)
     return (task.cfg_file, task.data_file, task.w_file, task.ypath)
+
+def setEstadoDescarga(fileName, estado):
+    conn = sqlite3.connect(config._DATABASE_SQLITE_DOWNLOAD)
+
+    if not(getExisteFile(fileName)):
+        query = "INSERT INTO {0} name_file, estado VALUES ('{1}','{2}')".format(config._TABLE_SQLITE,fileName,estado)
+    else:
+        query = "UPDATE {0} set estado = '{1}' where name_file = '{2}'".format(config._TABLE_SQLITE,estado,fileName)
+    conn.execute(query)
+    conn.commit()
+    numrows = conn.total_changes
+    conn.close()
+    
+    return numrows
+
+def getExisteFile(fileName):
+    conn = sqlite3.connect(config._DATABASE_SQLITE_DOWNLOAD)
+    query = "SELECT count(*) from downloads where name_file = '{0}'".format(fileName)
+    cursor = conn.execute(query)
+    num = cursor.fetchone()[0]
+    conn.close()
+    
+    return num > 0
+    
+
+def getEstadoDescarga(fileName):
+    conn = sqlite3.connect(config._DATABASE_SQLITE_DOWNLOAD)
+    query = "SELECT estado from downloads where name_file = '{0}'".format(fileName)
+    cursor = conn.execute(query)
+    estado = cursor.fetchone()[0]
+    conn.close()
+    return estado
 
 ### PASO No 1. LEER EL JSONS EN COLA
 jpath = './SoftwareOne/1. step1/'
