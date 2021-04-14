@@ -1,1 +1,2 @@
 azure-storage-blob==12.8.0
+azure-cosmosdb-table==1.0.6

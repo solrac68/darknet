@@ -83,6 +83,9 @@ def getJsonFromAzStorage(local_path, json_name):
         print("\nError al descargar el json: \n\t" + download_file_path)
         raise FileExistsError("Error al descargar el archivo")
 
+def getNombreModeloFromCosmosDB(cliente):
+    pass
+
 ### PASO No 1. LEER EL JSONS EN COLA
 jpath = './SoftwareOne/1. step1/'
 #data_jsons = os.listdir(jpath)
