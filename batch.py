@@ -22,6 +22,7 @@ warnings.filterwarnings('ignore')
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import sys
 from azure.cosmosdb.table.tableservice import TableService
+import timeit
 
 
 
@@ -53,30 +54,29 @@ altNames = None
 
 # Almacene esta información en una variable del sistema operativo - export AZURE_STORAGE_CONNECTION_STRING="<yourconnectionstring>"
 # O Almacene en azure key vault
-connect_str = config._AZURE_STORAGE_CONNECTION_STRING
-container = config._STORAGE_CONTAINER_INPUT
+#_AZURE_STORAGE_CONNECTION_STRING = config._AZURE_STORAGE_CONNECTION_STRING
+#_STORAGE_CONTAINER_INPUT = config._STORAGE_CONTAINER_INPUT
+#_STORAGE_CONTAINER_MODEL = config._STORAGE_CONTAINER_MODEL
 
 
-def getJsonFromBlobStorage(local_path, json_name):
-    download_file_path = os.path.join(local_path, json_name)
+def getFromBlobStorage(local_path, blob,container):
+    download_file_path = os.path.join(local_path, blob)
     try:
 
         blob_client = BlobClient.from_connection_string(
-            conn_str=connect_str, 
+            conn_str=config._AZURE_STORAGE_CONNECTION_STRING, 
             container_name=container, 
-            blob_name=json_name)
+            blob_name=blob)
 
         blob = blob_client.download_blob().readall()
         
         with open(download_file_path, "wb") as download_file:
             download_file.write(blob)
 
-        print("\nDescargado el json \n\t" + download_file_path)
-
         return download_file_path
     except:
-        print("\nError al descargar el json: \n\t" + download_file_path)
-        raise FileExistsError("Error al descargar el archivo")
+        print("\nError al descargar el blob: \n\t" + download_file_path)
+        raise FileExistsError("Error al descargar el blob")
 
 def getConfigFromTableStorage(cliente, proyecto):
     table_service = TableService(connection_string=config._AZURE_STORAGE_CONNECTION_STRING)
@@ -101,7 +101,8 @@ if __name__ == '__main__':
     else:
         raise ValueError("La parametros son incorrectos")
 
-    archivoMensaje = getJsonFromBlobStorage(jpath, json_name)
+    archivoMensaje = getFromBlobStorage(jpath, json_name,config._STORAGE_CONTAINER_INPUT)
+    print("Descargado el json {0}".format(archivoMensaje))
 
         
     ### PASO No 2.  ABRIENDO JSON:
@@ -125,6 +126,26 @@ if __name__ == '__main__':
     print("data_file: {0}".format(data_file))
     print("w_file: {0}".format(w_file))
     print("ypath: {0}".format(ypath))
+
+    ### PASO No 3.1 Descargando el modelo y los archivos de configuración del mismo desde azure storage hacia la ruta ypath
+ 
+    tic=timeit.default_timer()
+
+    path = getFromBlobStorage(ypath,cfg_file,config._STORAGE_CONTAINER_MODEL)
+    print("Descargado el archivo de configuración {0}".format(path))
+
+    path = getFromBlobStorage(ypath,data_file,config._STORAGE_CONTAINER_MODEL)
+    print("Descargado el archivo de configuración {0}".format(path))
+
+    path = getFromBlobStorage(ypath,w_file,config._STORAGE_CONTAINER_MODEL)
+    print("Descargado el archivo de configuración {0}".format(path))
+
+ 
+    toc=timeit.default_timer()
+
+    print("Tiempo inicial (tic): {0}, Tiempo final {1}".format(tic,toc)) 
+
+    print("Tiempo de la descarga en segundos (tic): {0}".format(str(toc-tic)))
 
     #cfg_file  =  "yolov4.cfg"            # Nombre archivo cfg de yolo
     #data_file =  "coco.data"             # Nombre archivo .data de yolo
