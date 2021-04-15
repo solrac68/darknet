@@ -119,9 +119,14 @@ def getEstadoDescarga(fileName):
     conn.close()
     return estado
 
-### PASO No 1. LEER EL JSONS EN COLA
-jpath = './SoftwareOne/1. step1/'
-#data_jsons = os.listdir(jpath)
+def vericarCarpetasSalida():
+    paths = ['./SoftwareOne/1. step1/', './SoftwareOne/1. step2/',
+    './SoftwareOne/1. steperror/','./SoftwareOne/2.yolo_files/',
+    './SoftwareOne/3. tasks/'] 
+    for path in paths:
+        if not(os.path.isdir(path)): os.mkdir(path)
+
+jpath1 = './SoftwareOne/1. step1/'
 
 # Nombre del archivo json a procesar.
 if __name__ == '__main__':
@@ -137,7 +142,10 @@ if __name__ == '__main__':
     else:
         raise ValueError("La parametros son incorrectos")
 
-    archivoMensaje = getFromBlobStorage(jpath, json_name,config._STORAGE_CONTAINER_INPUT)
+    
+    vericarCarpetasSalida()
+
+    archivoMensaje = getFromBlobStorage(jpath1, json_name,config._STORAGE_CONTAINER_INPUT)
     print("Descargado el json {0}".format(archivoMensaje))
 
         
