@@ -6,6 +6,8 @@ _STORAGE_ACCOUNT_KEY = 'iY0Fkd2gZ1Dg4qzdvXHpMn5icLuCRo6BNdn8Abzy5AY2PVd1AaYx5tUr
 _STORAGE_TABLE_NAME = 'configCliente'
 _STORAGE_CONTAINER_INPUT = 'mensajes'
 _STORAGE_CONTAINER_MODEL = 'modelos'
+_QUEUE_TOPIC_STITCHING = 'stitching'
+_QUEUE_TOPIC_OBJECT_ERROR = 'objectdetection_error'
 _POOL_ID = 'myPool'
 _JOB_ID = 'ObjectRecognitionJob'
 _AZURE_STORAGE_CONNECTION_STRING = 'DefaultEndpointsProtocol=https;AccountName=storageaccretail;AccountKey=iY0Fkd2gZ1Dg4qzdvXHpMn5icLuCRo6BNdn8Abzy5AY2PVd1AaYx5tUrdXieJknK1TlX2ewkmfcwwNtJT5vjRw==;EndpointSuffix=core.windows.net'
