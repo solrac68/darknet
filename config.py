@@ -12,3 +12,5 @@ _AZURE_STORAGE_CONNECTION_STRING = 'DefaultEndpointsProtocol=https;AccountName=s
 _QUEUE1 = 'objectdetection'
 _DATABASE_SQLITE_DOWNLOAD = './SoftwareOne/2.yolo_files/download.sqlite'
 _TABLE_SQLITE = 'downloads'
+_DOWNLOADED = 'descargado'
+_DOWNLOADING  = 'en_proceso'

@@ -45,7 +45,6 @@ from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, _
 #from boto.s3.key import Key
 
 
-
 ### YOLO SET INICIAL
 netMain = None
 metaMain = None
@@ -87,13 +86,14 @@ def getConfigFromTableStorage(cliente, proyecto):
     task = table_service.get_entity(config._STORAGE_TABLE_NAME, cliente, proyecto)
     return (task.cfg_file, task.data_file, task.w_file, task.ypath)
 
-def setEstadoDescarga(fileName, estado):
+def setEstadoDescarga(filepath, estado):
     conn = sqlite3.connect(config._DATABASE_SQLITE_DOWNLOAD)
 
-    if not(getExisteFile(fileName)):
-        query = "INSERT INTO {0} name_file, estado VALUES ('{1}','{2}')".format(config._TABLE_SQLITE,fileName,estado)
+    if not(getExisteFile(filepath)):
+        query = "INSERT INTO {0} (name_file, estado) VALUES ('{1}','{2}')".format(config._TABLE_SQLITE,filepath,estado)
     else:
-        query = "UPDATE {0} set estado = '{1}' where name_file = '{2}'".format(config._TABLE_SQLITE,estado,fileName)
+        query = "UPDATE {0} set estado = '{1}' where name_file = '{2}'".format(config._TABLE_SQLITE,estado,filepath)
+    print(query)
     conn.execute(query)
     conn.commit()
     numrows = conn.total_changes
@@ -101,9 +101,9 @@ def setEstadoDescarga(fileName, estado):
     
     return numrows
 
-def getExisteFile(fileName):
+def getExisteFile(filepath):
     conn = sqlite3.connect(config._DATABASE_SQLITE_DOWNLOAD)
-    query = "SELECT count(*) from downloads where name_file = '{0}'".format(fileName)
+    query = "SELECT count(*) from downloads where name_file = '{0}'".format(filepath)
     cursor = conn.execute(query)
     num = cursor.fetchone()[0]
     conn.close()
@@ -111,9 +111,9 @@ def getExisteFile(fileName):
     return num > 0
     
 
-def getEstadoDescarga(fileName):
+def getEstadoDescarga(filepath):
     conn = sqlite3.connect(config._DATABASE_SQLITE_DOWNLOAD)
-    query = "SELECT estado from downloads where name_file = '{0}'".format(fileName)
+    query = "SELECT estado from downloads where name_file = '{0}'".format(filepath)
     cursor = conn.execute(query)
     estado = cursor.fetchone()[0]
     conn.close()
@@ -126,30 +126,76 @@ def vericarCarpetasSalida():
     for path in paths:
         if not(os.path.isdir(path)): os.mkdir(path)
 
-jpath1 = './SoftwareOne/1. step1/'
+def existeArchivoDescargadoEnCarpeta(filepath):
+    return os.path.isfile(filepath)
 
-# Nombre del archivo json a procesar.
-if __name__ == '__main__':
 
-    # Iniciando el desarrollo personalizado
+def espera_por_descarga_weight(filepath,timeout):
 
-    print(len(sys.argv))
+    timeout_expiration = datetime.datetime.now() + timeout
 
-    if len(sys.argv) == 2:
-        json_name = str(sys.argv[1])
-    elif len(sys.argv) == 1:
-        json_name = "68a11879-7434-420f-bb09-cde500c0b95b.json"
-    else:
-        raise ValueError("La parametros son incorrectos")
+    print("Monitoreando la descarga, tiempo de expiración {}..."
+          .format(timeout), end='')
+
+    while datetime.datetime.now() < timeout_expiration:
+        print('.', end='')
+        sys.stdout.flush()
+        
+        if getEstadoDescarga(filepath) == config._DOWNLOADED:
+            print()
+            return True
+        else:
+            time.sleep(1)
+    
+    return False
+
+### Descargando el modelo y los archivos de configuración desde azure storage hacia la ruta ypath
+def descargaModeloDesdeStorage(cfg_file, data_file, w_file, ypath):
+    cfg_file_path = "{}{}".format(ypath,cfg_file)
+    data_file_path = "{}{}".format(ypath,data_file)
+    w_file_path = "{}{}".format(ypath,w_file)
+
+
+    print("cfg_file_path: {0}".format(cfg_file_path))
+    print("data_file_path: {0}".format(data_file_path))
+    print("w_file_path: {0}".format(w_file_path))
+    print("ypath: {0}".format(ypath))
 
     
-    vericarCarpetasSalida()
 
+    if existeArchivoDescargadoEnCarpeta(cfg_file_path):
+        print("Archivo {0} existente".format(cfg_file_path))
+    else:
+        path = getFromBlobStorage(ypath,cfg_file,config._STORAGE_CONTAINER_MODEL)
+        print("Descargado el archivo de configuración {0}".format(cfg_file_path))
+
+    if existeArchivoDescargadoEnCarpeta(data_file_path):
+        print("Archivo {0} existente".format(data_file_path))
+    else:
+        path = getFromBlobStorage(ypath,data_file,config._STORAGE_CONTAINER_MODEL)
+        print("Descargado el archivo de configuración {0}".format(data_file_path))
+
+    if existeArchivoDescargadoEnCarpeta(w_file_path):
+        print("Archivo {0} existente".format(w_file_path))
+    else:
+        #path = getFromBlobStorage(ypath,w_file,config._STORAGE_CONTAINER_MODEL)
+        if not(getExisteFile(w_file_path)) or getEstadoDescarga(w_file_path) == config._DOWNLOADED:
+            setEstadoDescarga(w_file_path, config._DOWNLOADING)
+            print("Inicia descarga de {}".format(w_file_path))
+            path = getFromBlobStorage(ypath,w_file,config._STORAGE_CONTAINER_MODEL)
+            setEstadoDescarga(w_file_path, config._DOWNLOADED)
+            print("Descargado el archivo de configuración {0}".format(w_file_path))
+        else:
+            if espera_por_descarga_weight(w_file_path,datetime.timedelta(minutes=5)) and existeArchivoDescargadoEnCarpeta(w_file_path):
+                print("Archivo {0} descargado por otra tarea con exito".format(w_file_path))
+            else:
+                raise Exception("Otra tarea no descargo correctamente el archivo {}".format(w_file_path))
+
+def getMensajeJson(jpath1,json_name):
     archivoMensaje = getFromBlobStorage(jpath1, json_name,config._STORAGE_CONTAINER_INPUT)
-    print("Descargado el json {0}".format(archivoMensaje))
 
-        
-    ### PASO No 2.  ABRIENDO JSON:
+    print("Descargado el json {0}".format(archivoMensaje))
+    
     with open(archivoMensaje) as json_file:
         res= json.loads(json_file.read())
         
@@ -162,34 +208,49 @@ if __name__ == '__main__':
 
     [print("imagen: {0}".format(img)) for img in imglist]
 
+    return (cliente,proyecto,job_id,imglist)
+
+
+jpath1 = './SoftwareOne/1. step1/'
+
+# Nombre del archivo json a procesar.
+if __name__ == '__main__':
+
+    # Iniciando el desarrollo personalizado
+    tic=timeit.default_timer()
+
+    if len(sys.argv) == 2:
+        json_name = str(sys.argv[1])
+    else:
+        raise ValueError("La parametros son incorrectos")
+    
+    ### Verifica que existan las carpetas para los resultados
+    vericarCarpetasSalida()
+
+    ### PASO No 2.  ABRIENDO JSON:
+    (cliente,proyecto,job_id,imglist) = getMensajeJson(jpath1,json_name)
 
     ### PASO No 3.  CONSULTA BASE DE DATOS SEGUN CLIENTE Y PROYECTO Y TRAE:
     (cfg_file, data_file, w_file, ypath) = getConfigFromTableStorage(cliente, proyecto)
 
-    print("cfg_file: {0}".format(cfg_file))
-    print("data_file: {0}".format(data_file))
-    print("w_file: {0}".format(w_file))
-    print("ypath: {0}".format(ypath))
-
-    ### PASO No 3.1 Descargando el modelo y los archivos de configuración del mismo desde azure storage hacia la ruta ypath
- 
-    tic=timeit.default_timer()
-
-    path = getFromBlobStorage(ypath,cfg_file,config._STORAGE_CONTAINER_MODEL)
-    print("Descargado el archivo de configuración {0}".format(path))
-
-    path = getFromBlobStorage(ypath,data_file,config._STORAGE_CONTAINER_MODEL)
-    print("Descargado el archivo de configuración {0}".format(path))
-
-    path = getFromBlobStorage(ypath,w_file,config._STORAGE_CONTAINER_MODEL)
-    print("Descargado el archivo de configuración {0}".format(path))
-
- 
+    ### PASO No 3.1 Descargando el modelo y los archivos de configuración desde azure storage hacia la ruta ypath
+    descargaModeloDesdeStorage(cfg_file, data_file, w_file, ypath)
+    
+    # Tiempo total de procesamiento de la tarea
     toc=timeit.default_timer()
-
-    print("Tiempo inicial (tic): {0}, Tiempo final {1}".format(tic,toc)) 
-
     print("Tiempo de la descarga en segundos (tic): {0}".format(str(toc-tic)))
+
+
+
+    # path = getFromBlobStorage(ypath,w_file,config._STORAGE_CONTAINER_MODEL)
+    # print("Descargado el archivo de configuración {0}".format(path))
+
+ 
+    # toc=timeit.default_timer()
+
+    # print("Tiempo inicial (tic): {0}, Tiempo final {1}".format(tic,toc)) 
+
+    # print("Tiempo de la descarga en segundos (tic): {0}".format(str(toc-tic)))
 
     #cfg_file  =  "yolov4.cfg"            # Nombre archivo cfg de yolo
     #data_file =  "coco.data"             # Nombre archivo .data de yolo
