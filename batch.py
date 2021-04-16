@@ -234,11 +234,11 @@ def descargaModeloDesdeStorage(cfg_file, data_file, w_file, ypath):
     return (configPath, metaPath, weightPath)
 
 def getMensajeJson(jpath1,json_name):
-    archivoMensaje = getFromBlobStorage(jpath1, json_name,config._STORAGE_CONTAINER_INPUT)
+    filePathJson = getFromBlobStorage(jpath1, json_name,config._STORAGE_CONTAINER_INPUT)
 
-    print("Descargado el json {0}".format(archivoMensaje))
+    print("Descargado el json {0}".format(filePathJson))
     
-    with open(archivoMensaje) as json_file:
+    with open(filePathJson) as json_file:
         res= json.loads(json_file.read())
         
     cliente  = str(res["master_customer"])
@@ -250,7 +250,7 @@ def getMensajeJson(jpath1,json_name):
 
     [print("imagen: {0}".format(img)) for img in imglist]
 
-    return (cliente,proyecto,job_id,imglist)
+    return (cliente,proyecto,job_id,imglist,filePathJson)
 
 def convertBack(x, y, w, h):
     xmin = int(round(x - (w / 2)))
@@ -278,7 +278,7 @@ def cvDrawBoxes(detections, img, t_size):
     return img
 
 
-def YOLO(imglist, config):
+def YOLO(imglist, config,filepathJson):
     
     global metaMain, netMain, altNames
 
@@ -495,23 +495,24 @@ def YOLO(imglist, config):
             pass
     
     #jsonfile   = "data_" + str(job_id) + ".json"
-    jsonfilePath = ""
+    #jsonfilePath = ""
     
     ## PUBLICANDO STEP YOLO HECHO.
     if err == False:
-        jsonfile   = "data_" + str(job_id) + ".json"
-        shutil.move(jpath + '/' + jsonfile , "./SoftwareOne/1. step2/" ) 
-        jsonfilePath = "./SoftwareOne/1. step2/{}".format(jsonfile)
-        #json_path
+        shutil.move(filepathJson, "./SoftwareOne/1. step2/" ) 
+        newPath = "./SoftwareOne/1. step2/{}"
         print('[INFO]: Object detection Terminado ', job_id)
-
     else:
-        jsonfile   = "data_" + str(job_id) + ".json"
-        shutil.move(jpath + '/' + jsonfile , "./SoftwareOne/1. steperror/" ) 
-        jsonfilePath = "./SoftwareOne/1. steperror/{}".format(jsonfile)
+        shutil.move(filepathJson, "./SoftwareOne/1. steperror/" ) 
+        newPath = "./SoftwareOne/1. steperror/{}"
         print('[INFO]:ERROR' , job_id)
     
-    return (err,jsonfilePath,images_result,cvs_result)
+    _, path_and_file = os.path.splitdrive(filepathJson)
+    _, file = os.path.splitdrive(path_and_file)
+
+    newfilepathJson =  newPath.format(file)
+    
+    return (err,newfilepathJson,images_result,cvs_result)
 
 
 jpath1 = './SoftwareOne/1. step1/'
@@ -531,7 +532,7 @@ if __name__ == '__main__':
     vericarCarpetasSalida()
 
     ### PASO No 2.  ABRIENDO JSON:
-    (cliente,proyecto,job_id,imglist) = getMensajeJson(jpath1,json_name)
+    (cliente,proyecto,job_id,imglist,filepathJson) = getMensajeJson(jpath1,json_name)
 
     ### PASO No 3.  CONSULTA BASE DE DATOS SEGUN CLIENTE Y PROYECTO Y TRAE:
     (cfg_file, data_file, w_file, ypath) = getConfigFromTableStorage(cliente, proyecto)
@@ -550,7 +551,7 @@ if __name__ == '__main__':
 
     ## PASO No 6.  LLAMANDO FUNCION:
     print("[CONFIG]", config, imglist)   
-    (err,jsonfilePath,images_result,cvs_result) = YOLO(imglist,config)
+    (err,newfilePathjson,images_result,cvs_result) = YOLO(imglist,config,filepathJson)
 
 
     ## PASO No 7.  VOLCANDO RESULTADOS A LOS CONTENEDORES Y A LA COLA:
@@ -559,7 +560,7 @@ if __name__ == '__main__':
     [uploadToContainer(local_path, blob,cliente) for (blob,local_path) in cvs_result]
     
     ## PASO No 8.  VOLCANDO MENSAJE A LA COLAS:
-    message = readFile(jsonfilePath)
+    message = readFile(newfilePathjson)
     addMessagesQueue(message,config._QUEUE_TOPIC_STITCHING) if err == True else addMessagesQueue(message,config._QUEUE_TOPIC_STITCHING)
     
     # Tiempo total de procesamiento de la tarea
