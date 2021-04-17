@@ -69,13 +69,14 @@ def readFile(filePath):
     return json.dumps(res)
 
 def createContainer(container):
-    #try:
-    container_client = BlobServiceClient.from_connection_string(
-        conn_str=config._AZURE_STORAGE_CONNECTION_STRING)
-    
-    container_client.create_container(container)
-    #except:
-    #    pass
+    try:
+        container_client = BlobServiceClient.from_connection_string(
+            conn_str=config._AZURE_STORAGE_CONNECTION_STRING)
+        
+        container_client.create_container(container)
+    except azure.core.exceptions.ResourceExistsError:
+        print("El contenedor {} ya existe".format(container))
+        pass
 
 def uploadToContainer(local_path, blob,container):
     blob_client = BlobClient.from_connection_string(
@@ -569,7 +570,7 @@ if __name__ == '__main__':
     print("json file path para cola: {}".format(filepathJson))
     mensajes = [readFile(filepathJson)]
     [print("Mensaje para cola: {}".format(m)) for m in mensajes]
-    addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING) if err == True else addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING)
+    addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING) if not(err) else addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING)
     
     # Tiempo total de procesamiento de la tarea
     toc=timeit.default_timer()
