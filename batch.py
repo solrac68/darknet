@@ -467,13 +467,18 @@ def YOLO(imglist, config):
             #cvs_result = []
             
             ###### GRABANDO ARCHIVOS LOCALES
+            print("INICIA GRABACIÓN ARCHIVOS LOCALES")
             file = job_id + "_"+ str(cont) + ".jpg"
+            print("Nombre Imagen: {}".format(file))
             k1_name = w_path + "/" + file
+            print("Ruta Imagen: {}".format(k1_name))
             cv2.imwrite(k1_name, image2)
             images_result.append((file,k1_name))
 
             file = job_id + "_"+ str(cont) + "c.jpg"
+            print("Nombre Imagen c: {}".format(file))
             k2_name = w_path + "/" + file
+            print("Ruta Imagen: {}".format(k2_name))
             plt.savefig(k2_name)
             plt.close(fig)
             images_result.append((file,k2_name))
