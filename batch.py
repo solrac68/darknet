@@ -278,7 +278,7 @@ def cvDrawBoxes(detections, img, t_size):
     return img
 
 
-def YOLO(imglist, config,filepathJson):
+def YOLO(imglist, config):
     
     global metaMain, netMain, altNames
 
@@ -499,20 +499,20 @@ def YOLO(imglist, config,filepathJson):
     
     ## PUBLICANDO STEP YOLO HECHO.
     if err == False:
-        shutil.move(filepathJson, "./SoftwareOne/1. step2/" ) 
-        newPath = "./SoftwareOne/1. step2/{}"
+        #shutil.move(filepathJson, "./SoftwareOne/1. step2/" ) 
+        #newPath = "./SoftwareOne/1. step2/{}"
         print('[INFO]: Object detection Terminado ', job_id)
     else:
-        shutil.move(filepathJson, "./SoftwareOne/1. steperror/" ) 
-        newPath = "./SoftwareOne/1. steperror/{}"
+        #shutil.move(filepathJson, "./SoftwareOne/1. steperror/" ) 
+        #newPath = "./SoftwareOne/1. steperror/{}"
         print('[INFO]:ERROR' , job_id)
     
-    _, path_and_file = os.path.splitdrive(filepathJson)
-    _, file = os.path.split(path_and_file)
+    #_, path_and_file = os.path.splitdrive(filepathJson)
+    #_, file = os.path.split(path_and_file)
 
-    newfilepathJson =  newPath.format(file)
+    #newfilepathJson =  newPath.format(file)
     
-    return (err,newfilepathJson,images_result,cvs_result)
+    return (err,images_result,cvs_result)
 
 
 jpath1 = './SoftwareOne/1. step1/'
@@ -547,11 +547,17 @@ if __name__ == '__main__':
         os.makedirs(w_path)
 
     ## PASO No 5.  ARMANDO EL CONFIG:
-    config = [configPath, weightPath, metaPath,w_path,job_id, jpath1]
+    configYolo = [configPath, weightPath, metaPath,w_path,job_id, jpath1]
 
     ## PASO No 6.  LLAMANDO FUNCION:
     print("[CONFIG]", config, imglist)   
-    (err,newfilePathjson,images_result,cvs_result) = YOLO(imglist,config,filepathJson)
+    (err,images_result,cvs_result) = YOLO(imglist,configYolo,filepathJson)
+
+    ## PASO NO 6.1. UBICACIÓN DE RESULTADOS
+    print("########################RESULTADOS FINALES############################")
+    [print("Imagenes: {}".format(local_path)) for (blob,local_path) in images_result]
+    [print("Cvs: {}".format(local_path)) for (blob,local_path) in cvs_result]
+    print("######################################################################")
 
 
     ## PASO No 7.  VOLCANDO RESULTADOS A LOS CONTENEDORES Y A LA COLA:
@@ -560,7 +566,7 @@ if __name__ == '__main__':
     [uploadToContainer(local_path, blob,cliente) for (blob,local_path) in cvs_result]
     
     ## PASO No 8.  VOLCANDO MENSAJE A LA COLAS:
-    message = readFile(newfilePathjson)
+    message = readFile(filepathJson)
     addMessagesQueue(message,config._QUEUE_TOPIC_STITCHING) if err == True else addMessagesQueue(message,config._QUEUE_TOPIC_STITCHING)
     
     # Tiempo total de procesamiento de la tarea
