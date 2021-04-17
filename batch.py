@@ -497,9 +497,9 @@ def YOLO(imglist, config):
 
         except:
             err = True
-            #pass
-            print("Unexpected error:", sys.exc_info()[0])
-            raise
+            print("Error inesperado:", sys.exc_info()[0])
+            pass
+            #raise
     
     ## PUBLICANDO STEP YOLO HECHO.
     if err == False:
