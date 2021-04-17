@@ -69,14 +69,14 @@ def readFile(filePath):
     return json.dumps(res)
 
 def createContainer(container):
-    try:
-        container_client = BlobClient.from_connection_string(
-            conn_str=config._AZURE_STORAGE_CONNECTION_STRING, 
-            container_name=container)
-        
-        container_client.create_container()
-    except:
-        pass
+    #try:
+    container_client = BlobClient.from_connection_string(
+        conn_str=config._AZURE_STORAGE_CONNECTION_STRING, 
+        container_name=container)
+    
+    container_client.create_container()
+    #except:
+    #    pass
 
 def uploadToContainer(local_path, blob,container):
     blob_client = BlobClient.from_connection_string(
@@ -566,8 +566,11 @@ if __name__ == '__main__':
     [uploadToContainer(local_path, blob,cliente) for (blob,local_path) in cvs_result]
     
     ## PASO No 8.  VOLCANDO MENSAJE A LA COLAS:
-    message = readFile(filepathJson)
-    addMessagesQueue(message,config._QUEUE_TOPIC_STITCHING) if err == True else addMessagesQueue(message,config._QUEUE_TOPIC_STITCHING)
+    print("Agregando mensaje en la cola..")
+    print("json file path para cola: {}".format(filepathJson))
+    mensajes = [readFile(filepathJson)]
+    [print("Mensaje para cola: {}".format(m)) for m in mensajes]
+    addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING) if err == True else addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING)
     
     # Tiempo total de procesamiento de la tarea
     toc=timeit.default_timer()
