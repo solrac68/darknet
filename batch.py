@@ -570,7 +570,7 @@ if __name__ == '__main__':
     print("json file path para cola: {}".format(filepathJson))
     mensajes = [readFile(filepathJson)]
     [print("Mensaje para cola: {}".format(m)) for m in mensajes]
-    addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING) if not(err) else addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING)
+    addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING) if not(err) else addMessagesQueue(mensajes,config._QUEUE_TOPIC_OBJECT_ERROR)
     
     # Tiempo total de procesamiento de la tarea
     toc=timeit.default_timer()
