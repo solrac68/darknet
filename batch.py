@@ -550,6 +550,7 @@ if __name__ == '__main__':
 
     ## PASO NO 6.1. UBICACIÓN DE RESULTADOS
     print("########################RESULTADOS FINALES############################")
+    print("Cliente: {}".format(cliente))
     [print("Imagenes: {}".format(local_path)) for (blob,local_path) in images_result]
     [print("Cvs: {}".format(local_path)) for (blob,local_path) in cvs_result]
     print("######################################################################")
