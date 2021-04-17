@@ -501,23 +501,11 @@ def YOLO(imglist, config):
             print("Unexpected error:", sys.exc_info()[0])
             raise
     
-    #jsonfile   = "data_" + str(job_id) + ".json"
-    #jsonfilePath = ""
-    
     ## PUBLICANDO STEP YOLO HECHO.
     if err == False:
-        #shutil.move(filepathJson, "./SoftwareOne/1. step2/" ) 
-        #newPath = "./SoftwareOne/1. step2/{}"
         print('[INFO]: Object detection Terminado ', job_id)
     else:
-        #shutil.move(filepathJson, "./SoftwareOne/1. steperror/" ) 
-        #newPath = "./SoftwareOne/1. steperror/{}"
         print('[INFO]:ERROR' , job_id)
-    
-    #_, path_and_file = os.path.splitdrive(filepathJson)
-    #_, file = os.path.split(path_and_file)
-
-    #newfilepathJson =  newPath.format(file)
     
     return (err,images_result,cvs_result)
 
@@ -574,9 +562,9 @@ if __name__ == '__main__':
     
     ## PASO No 8.  VOLCANDO MENSAJE A LA COLAS:
     print("Agregando mensaje en la cola..")
-    print("json file path para cola: {}".format(filepathJson))
+    # print("json file path para cola: {}".format(filepathJson))
     mensajes = [readFile(filepathJson)]
-    [print("Mensaje para cola: {}".format(m)) for m in mensajes]
+    # [print("Mensaje para cola: {}".format(m)) for m in mensajes]
     addMessagesQueue(mensajes,config._QUEUE_TOPIC_STITCHING) if not(err) else addMessagesQueue(mensajes,config._QUEUE_TOPIC_OBJECT_ERROR)
     
     # Tiempo total de procesamiento de la tarea
