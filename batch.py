@@ -70,11 +70,10 @@ def readFile(filePath):
 
 def createContainer(container):
     #try:
-    container_client = BlobClient.from_connection_string(
-        conn_str=config._AZURE_STORAGE_CONNECTION_STRING, 
-        container_name=container)
+    container_client = BlobServiceClient.from_connection_string(
+        conn_str=config._AZURE_STORAGE_CONNECTION_STRING)
     
-    container_client.create_container()
+    container_client.create_container(container)
     #except:
     #    pass
 
