@@ -508,7 +508,7 @@ def YOLO(imglist, config,filepathJson):
         print('[INFO]:ERROR' , job_id)
     
     _, path_and_file = os.path.splitdrive(filepathJson)
-    _, file = os.path.splitdrive(path_and_file)
+    _, file = os.path.split(path_and_file)
 
     newfilepathJson =  newPath.format(file)
     
