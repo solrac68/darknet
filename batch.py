@@ -497,7 +497,9 @@ def YOLO(imglist, config):
 
         except:
             err = True
-            pass
+            #pass
+            print("Unexpected error:", sys.exc_info()[0])
+            raise
     
     #jsonfile   = "data_" + str(job_id) + ".json"
     #jsonfilePath = ""
