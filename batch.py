@@ -551,7 +551,7 @@ if __name__ == '__main__':
 
     ## PASO No 6.  LLAMANDO FUNCION:
     print("[CONFIG]", config, imglist)   
-    (err,images_result,cvs_result) = YOLO(imglist,configYolo,filepathJson)
+    (err,images_result,cvs_result) = YOLO(imglist,configYolo)
 
     ## PASO NO 6.1. UBICACIÓN DE RESULTADOS
     print("########################RESULTADOS FINALES############################")
